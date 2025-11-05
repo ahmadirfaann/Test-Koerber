@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/site.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-12">
+                <!-- Page Header -->
+                <h1 class="display-3 text-center mb-2 page-header">Task Management</h1>
+                <p class="text-center text-muted mb-5">Organize your tasks with style and efficiency</p>
+
+                <!-- Add Task Form -->
+                <div class="modern-card mb-5">
+                    <div class="modern-card-header">
+                        <div class="d-flex align-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="16"></line>
+                                <line x1="8" y1="12" x2="16" y2="12"></line>
+                            </svg>
+                            Create New Task
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="taskForm">
+                            <div class="row g-4">
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold mb-2">Title <span class="text-danger">*</span></label>
+                                    <input type="text" id="taskTitle" class="form-control form-control-modern" placeholder="Enter task title" required />
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold mb-2">Description</label>
+                                    <input type="text" id="taskDescription" class="form-control form-control-modern" placeholder="Add a description (optional)" />
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-gradient-primary w-100">+ Add</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Stats Summary -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="modern-card text-center p-3">
+                            <h3 class="text-gradient-primary mb-0" id="totalCount">0</h3>
+                            <small class="text-muted">Total Tasks</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="modern-card text-center p-3">
+                            <h3 class="mb-0" style="color: #11998e;" id="completedCount">0</h3>
+                            <small class="text-muted">Completed</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="modern-card text-center p-3">
+                            <h3 class="mb-0" style="color: #f5576c;" id="pendingCount">0</h3>
+                            <small class="text-muted">Pending</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Buttons -->
+                <div class="filter-group">
+                    <button type="button" class="filter-btn active" data-filter="0" onclick="setFilter(0)">
+                        All Tasks (<span id="allCount">0</span>)
+                    </button>
+                    <button type="button" class="filter-btn" data-filter="1" onclick="setFilter(1)">
+                        Pending (<span id="pendingCountFilter">0</span>)
+                    </button>
+                    <button type="button" class="filter-btn" data-filter="2" onclick="setFilter(2)">
+                        Completed (<span id="completedCountFilter">0</span>)
+                    </button>
+                </div>
+
+                <!-- Tasks List -->
+                <div id="loadingIndicator" class="text-center py-5" style="display: none;">
+                    <div class="spinner-modern mx-auto"></div>
+                    <p class="text-muted mt-3">Loading your tasks...</p>
+                </div>
+
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">📝</div>
+                    <h4 class="text-muted mb-2">No tasks found</h4>
+                    <p class="text-muted">Create your first task above to get started!</p>
+                </div>
+
+                <div id="tasksList" class="row g-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFilter = 0;
+        let allTasks = [];
+
+        // Load tasks on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTasks();
+
+            document.getElementById('taskForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await createTask();
+            });
+        });
+
+        async function loadTasks() {
+            try {
+                document.getElementById('loadingIndicator').style.display = 'block';
+                document.getElementById('tasksList').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'none';
+
+                const response = await fetch(`/api/tasks?filter=${currentFilter}`);
+                const tasks = await response.json();
+
+                allTasks = tasks;
+                updateStats();
+                renderTasks(tasks);
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+                alert('Error loading tasks');
+            } finally {
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }
+        }
+
+        function renderTasks(tasks) {
+            const tasksList = document.getElementById('tasksList');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!tasks || tasks.length === 0) {
+                tasksList.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            tasksList.style.display = 'flex';
+            emptyState.style.display = 'none';
+
+            tasksList.innerHTML = tasks.map(task => `
+                <div class="col-md-6 col-lg-4">
+                    <div class="task-card shadow-modern ${task.isCompleted ? 'completed' : ''}">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="mb-0 ${task.isCompleted ? 'text-decoration-line-through text-muted' : 'fw-bold'}">
+                                ${escapeHtml(task.title)}
+                            </h5>
+                            <span class="badge badge-modern ${task.isCompleted ? 'badge-completed' : 'badge-pending'}">
+                                ${task.isCompleted ? '✓ Done' : '⏱ Pending'}
+                            </span>
+                        </div>
+                        ${task.description ? `<p class="text-muted mb-3" style="font-size: 0.9rem;">${escapeHtml(task.description)}</p>` : ''}
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <small class="text-muted">
+                                ${new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </small>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm ${task.isCompleted ? 'btn-outline-warning' : 'btn-gradient-success'}"
+                                        onclick="toggleTask(${task.id})"
+                                        title="${task.isCompleted ? 'Mark as Pending' : 'Mark as Complete'}">
+                                    ${task.isCompleted ? '↻' : '✓'}
+                                </button>
+                                <button class="btn btn-sm btn-gradient-danger"
+                                        onclick="deleteTask(${task.id})"
+                                        title="Delete Task">
+                                    🗑
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function createTask() {
+            const title = document.getElementById('taskTitle').value.trim();
+            const description = document.getElementById('taskDescription').value.trim();
+
+            if (!title) {
+                alert('Please enter a task title');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, description })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('taskTitle').value = '';
+                    document.getElementById('taskDescription').value = '';
+                    await loadTasks();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error creating task:', error);
+                alert('Error creating task');
+            }
+        }
+
+        async function toggleTask(id) {
+            try {
+                const response = await fetch(`/api/tasks/${id}/toggle`, {
+                    method: 'PUT'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    await loadTasks();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error toggling task:', error);
+                alert('Error updating task');
+            }
+        }
+
+        async function deleteTask(id) {
+            if (!confirm('Are you sure you want to delete this task?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/tasks/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    await loadTasks();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error deleting task:', error);
+                alert('Error deleting task');
+            }
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+
+            // Update button states
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+
+            loadTasks();
+        }
+
+        async function updateStats() {
+            // Load all tasks to get accurate counts
+            const response = await fetch('/api/tasks?filter=0');
+            const allTasksData = await response.json();
+
+            const total = allTasksData.length;
+            const completed = allTasksData.filter(t => t.isCompleted).length;
+            const pending = total - completed;
+
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('completedCount').textContent = completed;
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('allCount').textContent = total;
+            document.getElementById('pendingCountFilter').textContent = pending;
+            document.getElementById('completedCountFilter').textContent = completed;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
