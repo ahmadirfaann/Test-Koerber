@@ -7,11 +7,9 @@
 <div class="container py-5">
     <div class="row">
         <div class="col-12">
-            <!-- Animated Page Header -->
             <h1 class="display-3 text-center mb-2 page-header">Task Management</h1>
             <p class="text-center text-muted mb-5">Organize your tasks with style and efficiency</p>
 
-            <!-- Add Task Form -->
             <div class="modern-card mb-5">
                 <div class="modern-card-header">
                     <div class="d-flex align-items-center">
@@ -53,7 +51,6 @@
                 </div>
             </div>
 
-            <!-- Stats Summary -->
             <div class="row g-3 mb-4">
                 <div class="col-md-4">
                     <div class="modern-card text-center p-3">
@@ -75,7 +72,6 @@
                 </div>
             </div>
 
-            <!-- Filter Buttons -->
             <div class="filter-group">
                 <button type="button" class="filter-btn @(currentFilter == TaskFilter.All ? "active" : "")" @onclick="() => SetFilter(TaskFilter.All)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
@@ -104,7 +100,6 @@
                 </button>
             </div>
 
-            <!-- Tasks List -->
             @if (isLoading)
             {
                 <div class="text-center py-5">
