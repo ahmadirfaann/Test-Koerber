@@ -36,7 +36,7 @@ public class TaskRepository : ITaskRepository
 
     public async Task<TaskItem?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _context.Tasks.FindAsync(new object[] { id }, cancellationToken);
+        return await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
     public async Task<TaskItem> CreateAsync(TaskItem task, CancellationToken cancellationToken = default)
@@ -54,7 +54,7 @@ public class TaskRepository : ITaskRepository
 
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        var task = await _context.Tasks.FindAsync(new object[] { id }, cancellationToken);
+        var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
         if (task != null)
         {
             _context.Tasks.Remove(task);

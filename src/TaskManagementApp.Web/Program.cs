@@ -39,12 +39,10 @@ using (var scope = app.Services.CreateScope())
 
 // Configure the HTTP request pipeline.
 app.UseCors();
+app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseRouting();
-
-// Serve index.html as default
-app.UseDefaultFiles();
-
 app.MapControllers();
+app.MapFallbackToFile("index.html");
 
 app.Run();

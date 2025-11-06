@@ -133,44 +133,28 @@ h1:focus {
 
 /* Task Card Styles */
 .task-card {
-    background: white;
+    background: #ffffff;
     border-radius: var(--border-radius);
     padding: 1.5rem;
-    transition: var(--transition);
-    border: 2px solid transparent;
-    position: relative;
-    overflow: hidden;
-    animation: fadeInUp 0.4s ease-out;
-}
-
-.task-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--primary-gradient);
-    transition: var(--transition);
+    border: 1px solid rgba(102, 126, 234, 0.12);
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .task-card:hover {
-    transform: translateY(-6px) scale(1.02);
+    transform: translateY(-4px);
     box-shadow: var(--card-shadow-hover);
-    border-color: rgba(102, 126, 234, 0.3);
 }
 
-.task-card:hover::before {
-    width: 100%;
-    opacity: 0.05;
+.task-card button {
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
 }
 
 .task-card.completed {
-    opacity: 0.85;
-}
-
-.task-card.completed::before {
-    background: var(--success-gradient);
+    opacity: 0.92;
+    border-color: rgba(17, 153, 142, 0.25);
 }
 
 /* Button Styles */
